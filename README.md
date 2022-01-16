@@ -47,6 +47,14 @@ You can then execute your native executable with: `./target/account-service-1.0.
 
 If you want to learn more about building native executables, please consult https://quarkus.io/guides/maven-tooling.
 
+## Deploying into a Kubernetes Cluster
+1. Make sure pom.xml contains **quarkus-kubernetes** and **quarkus-container-image-docker** dependencies.
+2. Set **quarkus.kubernetes.image-pull-policy=never** in **application.properties**.
+3. Run **mvn clean compile** to generate **target/kubernetes.yml**.
+4. Run **mvn clean package -Dquarkus.kubernetes.deploy=true**
+5. Make sure everything is running with **kubectl get services**, **kubectl get pods**.
+6. Run **kubectl port-forward <full_pod_name> 8080:8080**. It will allow you to send requests via http://localhost:8080.
+
 ## Related Guides
 
 - RESTEasy JAX-RS ([guide](https://quarkus.io/guides/rest-json)): REST endpoint framework implementing JAX-RS and more
