@@ -1,7 +1,5 @@
 package quarkus;
 
-import org.jboss.resteasy.annotations.Body;
-
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.json.Json;
