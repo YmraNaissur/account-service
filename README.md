@@ -1,4 +1,4 @@
-# account-service Project
+# account-service project
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
