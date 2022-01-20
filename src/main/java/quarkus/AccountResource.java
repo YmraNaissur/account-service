@@ -72,6 +72,17 @@ public class AccountResource {
         return account;
     }
 
+    @GET
+    @Path("/close/{accountNumber}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    public Account closeAccount(@PathParam ("accountNumber") Long accountNumber) {
+        Account account = getAccount(accountNumber);
+        account.close();
+        entityManager.persist(account);
+        return account;
+    }
+
     @DELETE
     @Path("/{accountNumber}")
     @Produces(MediaType.TEXT_PLAIN)
