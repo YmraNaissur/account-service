@@ -1,89 +1,85 @@
 package quarkus;
 
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.transaction.Transactional;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 import java.math.BigDecimal;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 @Path("/accounts")
 @ApplicationScoped
 public class AccountResource {
 
-    Set<Account> accounts = new HashSet<>();
-
-    @PostConstruct
-    public void setup() {
-        accounts.add(new Account(1L, 31L, "Max Karavaev", new BigDecimal("678000")));
-        accounts.add(new Account(2L, 18L, "Artem Zhvikov", new BigDecimal("100")));
-        accounts.add(new Account(3L, 12L, "Alexander Korneev", new BigDecimal("500")));
-    }
+    @Inject
+    EntityManager entityManager;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Set<Account> allAccounts() {
-        return accounts;
+    public List<Account> allAccounts() {
+        return entityManager.createNamedQuery("Account.findAll", Account.class).getResultList();
     }
 
     @GET
     @Path("/{accountNumber}")
     @Produces(MediaType.APPLICATION_JSON)
     public Account getAccount(@PathParam("accountNumber") Long accountNumber) {
-        return findAccountByNumber(accountNumber);
+        try {
+            return entityManager.createNamedQuery("Account.findByAccountNumber", Account.class)
+                    .setParameter("accountNumber", accountNumber)
+                    .getSingleResult();
+        } catch (NoResultException nre) {
+            throw new WebApplicationException("Account number " + accountNumber + " doesn't exist", 404);
+        }
     }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response createAccount(Account account) {
-        if (account.getAccountNumber() == null) {
-            throw new WebApplicationException("No account number specified", 400);
-        }
-
-        accounts.add(account);
-        return Response.status(201).entity(account).build();
+    @Transactional
+    public Account createAccount(Account account) {
+        entityManager.persist(account);
+        return account;
     }
 
     @GET
     @Path("/withdraw")
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response withdrawFunds(@QueryParam("accountNumber") Long accountNumber,
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    public Account withdrawFunds(@QueryParam("accountNumber") Long accountNumber,
                                   @QueryParam("value") BigDecimal value) {
-        Account account = findAccountByNumber(accountNumber);
+        Account account = getAccount(accountNumber);
         account.withdrawFunds(value);
-        return Response.ok("Funds have been withdrawn from account number " + accountNumber).build();
+        return account;
     }
 
     @GET
     @Path("/deposit")
-    public Response depositFunds(@QueryParam("accountNumber") Long accountNumber,
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    public Account depositFunds(@QueryParam("accountNumber") Long accountNumber,
                                  @QueryParam("value") BigDecimal value) {
-        Account account = findAccountByNumber(accountNumber);
+        Account account = getAccount(accountNumber);
         account.addFunds(value);
-        return Response.ok("Funds have been deposited into account number " + accountNumber).build();
+        return account;
     }
 
-    @GET
-    @Path("/delete/{accountNumber}")
+    @DELETE
+    @Path("/{accountNumber}")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Transactional
     public Response deleteAccount(@PathParam("accountNumber") Long accountNumber) {
-        Account account = findAccountByNumber(accountNumber);
-        accounts.remove(account);
+        Account account = getAccount(accountNumber);
+        entityManager.remove(account);
         return Response.ok("Account number " + accountNumber + " has been successfully deleted").build();
-    }
-
-    private Account findAccountByNumber(Long accountNumber) {
-        return accounts.stream()
-                .filter(a -> a.getAccountNumber().equals(accountNumber))
-                .findFirst()
-                .orElseThrow(() -> new WebApplicationException("Account number " + accountNumber
-                        + " does not exist", Response.Status.NOT_FOUND));
     }
 
     @Provider

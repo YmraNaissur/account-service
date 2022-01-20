@@ -1,25 +1,26 @@
 package quarkus;
 
+import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.Objects;
 
+@Entity
+@NamedQuery(name = "Account.findAll", query = "select a from Account a order by a.accountNumber")
+@NamedQuery(name = "Account.findByAccountNumber",
+        query = "select a from Account a where a.accountNumber = :accountNumber order by a.accountNumber")
 public class Account {
-    public Long accountNumber;
-    public Long customerNumber;
-    public String customerName;
-    public BigDecimal balance;
-    public AccountStatus accountStatus = AccountStatus.OPEN;
 
-    public Account() {
-        /* No args constructor */
-    }
+    @Id
+    @SequenceGenerator(name = "accountsSequence", sequenceName = "accounts_id_seq",
+            allocationSize = 1, initialValue = 10)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "accountsSequence")
+    private Long id;
 
-    public Account(Long accountNumber, Long customerNumber, String customerName, BigDecimal balance) {
-        this.accountNumber = accountNumber;
-        this.customerNumber = customerNumber;
-        this.customerName = customerName;
-        this.balance = balance;
-    }
+    private Long accountNumber;
+    private Long customerNumber;
+    private String customerName;
+    private BigDecimal balance;
+    private AccountStatus accountStatus = AccountStatus.OPEN;
 
     public void markOverdrawn() {
         accountStatus = AccountStatus.OVERDRAWN;
@@ -74,6 +75,26 @@ public class Account {
 
     public AccountStatus getAccountStatus() {
         return accountStatus;
+    }
+
+    public void setAccountNumber(Long accountNumber) {
+        this.accountNumber = accountNumber;
+    }
+
+    public void setCustomerNumber(Long customerNumber) {
+        this.customerNumber = customerNumber;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+
+    public void setBalance(BigDecimal balance) {
+        this.balance = balance;
+    }
+
+    public void setAccountStatus(AccountStatus accountStatus) {
+        this.accountStatus = accountStatus;
     }
 
     @Override

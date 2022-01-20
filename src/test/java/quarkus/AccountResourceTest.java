@@ -18,7 +18,7 @@ import static org.hamcrest.Matchers.*;
 @QuarkusTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class AccountResourceTest {
-    @Test
+/*    @Test
     @Order(1)
     void testRetrieveAll() {
         Response result = given()
@@ -86,5 +86,5 @@ class AccountResourceTest {
         List<Account> accounts = result.jsonPath().getList("$");
         assertThat(accounts, not(empty()));
         assertThat(accounts, hasSize(4));
-    }
+    }*/
 }
